@@ -1,7 +1,8 @@
 module Api
   module V1
     class RecordsController < ApplicationController
-      before_action :set_record, only: %i[show update destroy]
+      before_action :set_record, only: [:show, :update, :destroy]
+      before_action :download_audio, only: [:create]
 
       def index
         records = Record.order(created_at: :desc)
@@ -13,7 +14,7 @@ module Api
       end
 
       def create
-        record = Record.new(record_params)
+        record = Raspio::Record.new(record_params)
         if record.save
           render json: { status: 'SUCCESS', data: record }
         else
@@ -37,7 +38,7 @@ module Api
       private
 
       def set_record
-        @record = Record.find(params[:id])
+        @record = Raspio::Record.find(params[:id])
       end
 
       def record_params
