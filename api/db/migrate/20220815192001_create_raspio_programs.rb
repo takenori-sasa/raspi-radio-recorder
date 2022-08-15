@@ -6,8 +6,8 @@ class CreateRaspioPrograms < ActiveRecord::Migration[7.0]
       t.string :title, null: false
       t.text :description
       t.string :homepage
-      t.time :from, null: false
-      t.time :to, null: false
+      t.datetime :from, null: false
+      t.datetime :to, null: false
 
       t.timestamps
     end
