@@ -23,6 +23,6 @@ REXML::XPath.match(doc, 'radiko/stations/station').map do |station|
     title = hankaku(program.elements['title'].text)
     description = desc(program)
     homepage = program.elements['url'].text
-    Raspio::TimeTable.create(station_id:, title:, from:, to:, description:, homepage:)
+    Raspio::Program.create(station_id:, title:, from:, to:, description:, homepage:)
   end
 end
