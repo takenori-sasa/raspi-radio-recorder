@@ -8,7 +8,8 @@ end
 
 def desc(program)
   concat = "#{program.elements['desc'].text}#{program.elements['info'].text}"
-  stripped = ActionController::Base.helpers.strip_tags(concat.gsub(/(<BR>)+/, "\r\n").gsub(/^\r\n/, ''))
+  stripped = ActionController::Base.helpers.strip_tags(concat).gsub(/&gt;|&lt/, "&gt;" => ">", "&lt;" => "<").gsub(/\t+|\n+/, "\n")
+
   hankaku(stripped)
 end
 uri = URI.parse('https://radiko.jp/v3/program/date/20220814/JP26.xml')
@@ -27,7 +28,6 @@ REXML::XPath.match(doc, 'radiko/stations/station').map do |station|
     homepage = program.elements['url'].text
     prog = Raspio::Program.find_or_initialize_by(id:)
     prog.update(raspio_station_id: station_id, title:, from:, to:, description:, homepage:, date:)
-    binding.pry
     prog.save
   end
 end
