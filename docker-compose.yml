@@ -29,15 +29,15 @@ services:
     environment:
       REDIS_URL: redis://redis:6379
 
-  app: &app_base
+  api: &api_base
     build:
-      context: .
-      dockerfile: Dockerfile/rails.dockerfile
+      context: ./api
+      dockerfile: Dockerfile
     command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3001 -b '0.0.0.0'"
-    env_file:
-      - ./.env.dev
+    # env_file:
+    #   - ../.env.dev
     volumes:
-      - .:/app:cached
+      - ./api:/app:cached
     volumes_from:
       - shared
     ports:
@@ -51,7 +51,7 @@ services:
       REDIS_URL: redis://redis:6379
     restart: always
   sidekiq:
-    <<: *app_base
+    <<: *api_base
     command: bundle exec sidekiq
     depends_on:
       - db
@@ -61,8 +61,6 @@ services:
     ports: []
     volumes_from:
       - shared
-    volumes:
-      - .:/app:cached
 volumes:
   db:
     driver: local
