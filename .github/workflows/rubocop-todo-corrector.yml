@@ -1,0 +1,29 @@
+# cf.https://github.com/r7kamura/rubocop-todo-corrector
+name: rubocop-todo-corrector
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '00 10 * * 5' # 日本時間で月曜9時
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: r7kamura/rubocop-todo-corrector@v0
+        with:
+          mode: random
+          only_safe: true # trueでsafe copのみ
+      - name: add required
+        run: |
+          cat << EOR >> .rubocop_todo.yml
+          require:
+            - rubocop-rails
+            - rubocop-rspec
+            - rubocop-rake
+            - rubocop-performance
+            - rubocop-rubycw
+            - rubocop-i18n
+          EOR
+      - name: commit and push
+        run: git add . && git commit -m "add required" && git push
