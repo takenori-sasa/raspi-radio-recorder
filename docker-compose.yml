@@ -6,7 +6,7 @@ services:
       - db:/var/lib/mysql
       - bundle:/usr/local/bundle:cached
       - redis-data:/data:cached
-      - node_modules:/app/node_modules
+      - "node_modules:/app/node_modules"
   db:
     image: mysql:5.7
     platform: linux/x86_64
