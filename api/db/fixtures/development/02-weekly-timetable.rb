@@ -1,6 +1,7 @@
 require 'rexml/document'
 require 'net/http'
 require 'nkf'
+require 'pry'
 def hankaku(text)
   NKF.nkf('-W -w -Z1', text).strip
 end
@@ -15,6 +16,7 @@ xml = Net::HTTP.get(uri)
 doc = REXML::Document.new(xml)
 REXML::XPath.match(doc, 'radiko/stations/station').map do |station|
   station_id = station.attributes['id']
+  programs = Raspio::Station.find_by(id: station_id).programs
   REXML::XPath.match(station, 'progs/prog').map do |program|
     id = program.attributes['id']
     ft = program.attributes['ft'] + '+09:00'
@@ -24,6 +26,8 @@ REXML::XPath.match(doc, 'radiko/stations/station').map do |station|
     description = desc(program)
     homepage = program.elements['url'].text
     prog = Raspio::Program.find_or_initialize_by(id:)
-    prog.update(raspio_station_id: station_id, title:, from:, to:, description:, homepage:)
+    # prog_station = Raspio::Station.find_by(id: station_id)
+    prog.update(title:, from:, to:, description:, homepage:)
+    prog.save
   end
 end
