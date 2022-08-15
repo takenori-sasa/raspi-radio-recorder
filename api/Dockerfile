@@ -1,6 +1,8 @@
 FROM ruby:3.1
 
-ENV LANG C.UTF-8
+ENV LANG=ja_JP.UTF-8 \
+    LC_CTYPE=ja_JP.UTF-8 \
+    TZ=Asia/Tokyo
 RUN mkdir /app
 WORKDIR /app
 RUN apt-get update \
