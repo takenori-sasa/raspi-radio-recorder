@@ -20,10 +20,10 @@ module Api
 
       def create
         record = Raspio::Record.new(ffmpeg_params)
-        Tempfile.open(["#{record.title}", ".aac"]) do |file|
+        Tempfile.open([record.title, ".aac"]) do |file|
           file.binmode
           result = download_audio(file, record)
-          render json: { status: 'ERROR', data: 'download failed.' } and return unless result
+          render json: { status: 'ERROR', data: 'download failed.' } unless result
 
           record.audio.attach(io: file, filename: "#{record.title}.aac", content_type: "audio/aac")
           if record.save

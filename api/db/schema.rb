@@ -46,6 +46,7 @@ ActiveRecord::Schema[7.0].define(version: 2022_08_15_192001) do
     t.string "homepage"
     t.datetime "from", null: false
     t.datetime "to", null: false
+    t.date "date", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["raspio_station_id"], name: "index_raspio_programs_on_raspio_station_id"
