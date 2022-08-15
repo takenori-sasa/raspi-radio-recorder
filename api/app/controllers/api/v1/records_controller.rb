@@ -2,14 +2,12 @@ require 'uri'
 require 'net/http'
 require 'base64'
 require 'tempfile'
-
 module Api
   module V1
     class RecordsController < ApplicationController
       include Raspio
       before_action :authorization, only: [:create]
       before_action :set_record, only: [:show, :update, :destroy]
-      AUTHKEY = 'bcd151073c03b352e1ef2fd66c32209da9ca0afa'.freeze
 
       def index
         records = Record.order(created_at: :desc)
@@ -21,24 +19,19 @@ module Api
       end
 
       def create
-        station_id = 'MBS'
-        from = '202208140300'
-        to = '202208140330'
-        Tempfile.open(["#{station_id}_#{from}_#{to}", ".aac"]) do |file|
+        record = Raspio::Record.new(ffmpeg_params)
+        Tempfile.open(["#{record.title}", ".aac"]) do |file|
           file.binmode
-          result = system("ffmpeg -headers \"X-Radiko-AuthToken:#{@auth_token}\" -i \"https://radiko.jp/v2/api/ts/playlist.m3u8?station_id=#{station_id}&l=15&ft=#{from}00&to=#{to}00\" -loglevel \"error\" -vn -y -acodec copy #{file.path}")
+          result = download_audio(file, record)
           render json: { status: 'ERROR', data: 'download failed.' } and return unless result
 
-          record = Record.new(title: "#{station_id}_#{from}_#{to}")
-          record.audio.attach(io: file, filename: "#{station_id}_#{from}_#{to}.aac", content_type: "audio/aac")
+          record.audio.attach(io: file, filename: "#{record.title}.aac", content_type: "audio/aac")
           if record.save
             render json: { status: 'SUCCESS', data: record }
           else
             render json: { status: 'ERROR', data: record.errors }
           end
         end
-      rescue StandardError => e
-        render json: { status: 'ERROR', data: e }
       end
 
       def destroy
@@ -65,7 +58,9 @@ module Api
       end
 
       def ffmpeg_params
-        params.require(:record).permit(:to, :from, :station_id)
+        title = "#{params[:record][:station_id]}_#{params[:record][:from]}_#{params[:record][:to]}"
+        params.require(:record).permit(:station_id, :from,
+                                       :to).merge(title:)
       end
 
       def authorization
@@ -76,6 +71,13 @@ module Api
         render json: { status: 'ERROR', data: 'authorization2 failed.' } and return unless res2.is_a?(Net::HTTPSuccess)
 
         @auth_token = res1['X-Radiko-AuthToken']
+      end
+
+      def download_audio(file, record)
+        station_id = record.station_id
+        from = record.from
+        to = record.to
+        system("ffmpeg -headers \"X-Radiko-AuthToken:#{@auth_token}\" -i \"https://radiko.jp/v2/api/ts/playlist.m3u8?station_id=#{station_id}&l=15&ft=#{from}00&to=#{to}00\" -loglevel \"error\" -vn -y -acodec copy #{file.path}")
       end
 
       def authorization1
@@ -95,7 +97,7 @@ module Api
         key_length = res['X-Radiko-KeyLength'].to_i
         key_offset = res['X-Radiko-KeyOffset'].to_i
         autho2_headers = { 'X-Radiko-AuthToken': auth_token,
-                           'X-Radiko-PartialKey': partial_key(AUTHKEY, key_length, key_offset),
+                           'X-Radiko-PartialKey': partial_key(Record::AUTHKEY, key_length, key_offset),
                            'X-Radiko-User': 'dummy_user',
                            'X-Radiko-Device': 'pc' }
         uri = URI.parse('https://radiko.jp/v2/api/auth2')
