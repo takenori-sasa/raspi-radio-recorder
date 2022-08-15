@@ -2,9 +2,7 @@ module Raspio
   class Station < ApplicationRecord
     validates :id, presence: true
     validates :name, presence: true
-    validates :banner, format: /\A#{URI::DEFAULT_PARSER.make_regexp(['http', 'https'])}\z/, if: :banner?
-    def banner?
-      banner.present?
-    end
+    validates :banner, url: { allow_blank: true }
+    has_many  :time_tables, dependent: :destroy
   end
 end

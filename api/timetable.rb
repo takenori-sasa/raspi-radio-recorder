@@ -16,13 +16,13 @@ xml = Net::HTTP.get(uri)
 doc = REXML::Document.new(xml)
 REXML::XPath.match(doc, 'radiko/stations/station').map do |station|
   station_id = station.elements['id'].text
-  # date = station.elements['progs/date'].text
   REXML::XPath.match(station, 'progs/prog').map do |program|
-    from = program.attributes['ft']
-    to = program.attributes['to']
+    ft = program.attributes['ft'] + '+09:00'
+    from = Time.strptime(ft, '%Y%m%d%H%M%S%Z')
+    to = Time.strptime(program.attributes['to'] + '+09:00', '%Y%m%d%H%M%S%Z')
     title = hankaku(program.elements['title'].text)
     description = desc(program)
-    url = program.elements['url'].text
-    Raspio::TimeTable.create(station_id:, title:, from:, to:, description:, url:)
+    homepage = program.elements['url'].text
+    Raspio::TimeTable.create(station_id:, title:, from:, to:, description:, homepage:)
   end
 end
