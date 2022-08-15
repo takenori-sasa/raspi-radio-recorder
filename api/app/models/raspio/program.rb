@@ -4,4 +4,7 @@ class Raspio::Program < ApplicationRecord
   validates :from, presence: true
   validates :homepage, url: { allow_nil: true }
   validates :to, presence: true
+  def station
+    self.raspio_station
+  end
 end
