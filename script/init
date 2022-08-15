@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+cp .env.dev.sample .env.dev
+
+docker-compose build
+
+docker-compose run --rm rails bundle exec rails new . --force --database=postgresql --skip-turbolinks --skip-git --skip-test webpacker:install
+
+cp -f template/database.yml config/database.yml
+cp -f template/package.json ./package.json
+docker-compose run --rm rails yarn install --check-files
+echo "
+group :development do
+  gem 'rubocop', require: false
+  gem 'solargraph'
+end
+" >> Gemfile
+docker-compose run --rm rails bundle install
