@@ -142,7 +142,6 @@ GEM
       pry (~> 0.13.0)
     pry-rails (0.3.9)
       pry (>= 0.10.4)
-    public_suffix (5.0.0)
     puma (5.6.4)
       nio4r (~> 2.0)
     racc (1.6.0)
@@ -249,9 +248,6 @@ GEM
     tzinfo (2.0.5)
       concurrent-ruby (~> 1.0)
     unicode-display_width (2.2.0)
-    validate_url (1.0.15)
-      activemodel (>= 3.0.0)
-      public_suffix
     websocket-driver (0.7.5)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
@@ -285,7 +281,6 @@ DEPENDENCIES
   sidekiq
   sinatra
   tzinfo-data
-  validate_url
 
 RUBY VERSION
    ruby 3.1.2p20
