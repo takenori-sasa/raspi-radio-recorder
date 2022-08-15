@@ -187,6 +187,9 @@ GEM
       io-console (~> 0.5)
     rexml (3.2.5)
     ruby2_keywords (0.0.5)
+    seed-fu (2.3.9)
+      activerecord (>= 3.1)
+      activesupport (>= 3.1)
     sidekiq (6.5.4)
       connection_pool (>= 2.2.2)
       rack (~> 2.0)
@@ -223,6 +226,7 @@ DEPENDENCIES
   redis (~> 4.0)
   redis-rails
   rexml
+  seed-fu
   sidekiq
   sinatra
   tzinfo-data
