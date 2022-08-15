@@ -27,7 +27,7 @@ REXML::XPath.match(doc, 'radiko/stations/station').map do |station|
     homepage = program.elements['url'].text
     prog = Raspio::Program.find_or_initialize_by(id:)
     # prog_station = Raspio::Station.find_by(id: station_id)
-    prog.update(title:, from:, to:, description:, homepage:)
+    prog.update(raspio_station_id: station_id, title:, from:, to:, description:, homepage:)
     prog.save
   end
 end
