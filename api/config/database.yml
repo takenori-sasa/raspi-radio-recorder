@@ -17,9 +17,13 @@ default: &default
   password:
   host: localhost
 
+
 development:
   <<: *default
   database: app_development
+  host: db
+  username: root
+  password: password
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
@@ -27,6 +31,10 @@ development:
 test:
   <<: *default
   database: app_test
+  host: db
+  username: root
+  password: password
+
 
 # As with config/credentials.yml, you never want to store sensitive information,
 # like your database password, in your source code. If your source code is
