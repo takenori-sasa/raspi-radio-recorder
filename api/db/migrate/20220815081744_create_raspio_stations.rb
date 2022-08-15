@@ -1,6 +1,6 @@
-class CreateStations < ActiveRecord::Migration[7.0]
+class CreateRaspioStations < ActiveRecord::Migration[7.0]
   def change
-    create_table :stations, id: false do |t|
+    create_table :raspio_stations, id: false do |t|
       t.string :id, primary_key: true
       t.string :name, null: false
       t.string :banner

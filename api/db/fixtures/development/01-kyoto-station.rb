@@ -11,5 +11,5 @@ REXML::XPath.match(doc, '/stations/station').map do |station|
   banner = station.elements['banner'].text || nil
   timeshift = station.elements['timefree'].text.to_i == 1
 
-  Station.create(id:, name:, banner:, timeshift:)
+  Raspio::Station.create(id:, name:, banner:, timeshift:)
 end
