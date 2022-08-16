@@ -1,3 +1,4 @@
+require 'pry'
 module Api
   module V1
     class ProgramsController < ApplicationController
@@ -6,8 +7,13 @@ module Api
       # before_action :make_time_table, only: [:show, :index]
 
       def index(date = [Time.zone.today])
+        # search_params[:date].map { |d| d.is_a?(String) ? Date.parse(d) : d }
+        # date.each do |d|
+        #   d = Date.parse(d) if d.is_a?(String)
+        # end
+        # todo Strongパラメータに対応してクエリでも検索できるようにする
         create(date) if Program.where(date:).count.zero?
-        programs = Program.order(created_at: :desc)
+        programs = Program.where(date:).order(created_at: :desc)
         render json: { status: 'SUCCESS', message: 'Loaded programs', data: programs }
       end
 
@@ -44,7 +50,13 @@ module Api
       end
 
       def program_params
-        params.require(:program).permit(:title, date: [Time.zone.today])
+        params.require(:program).permit(:title, :date)
+      end
+
+      def search_params
+        pparams = params.require(:program).permit(:date)
+        pparams[:date].map! { |d| Date.parse(d) }
+        pparams
       end
     end
   end
