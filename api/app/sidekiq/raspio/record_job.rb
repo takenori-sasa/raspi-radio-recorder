@@ -1,7 +1,12 @@
 class Raspio::RecordJob
   include Sidekiq::Job
+  sidekiq_options retry: 5
+
+  sidekiq_retries_exhausted do |msg, ex|
+    # ExceptionNotifier.call(msg, ex)
+  end
 
   def perform(*args)
-    # Do something
+    Api::V1::RecordsController.create(*args)
   end
 end
