@@ -20,10 +20,10 @@ module Api
 
       def create
         record = Raspio::Record.new(ffmpeg_params)
-        Tempfile.open(["#{record.title}", ".aac"]) do |file|
+        Tempfile.open([record.title, ".aac"]) do |file|
           file.binmode
           result = download_audio(file, record)
-          render json: { status: 'ERROR', data: 'download failed.' } and return unless result
+          render json: { status: 'ERROR', data: 'download failed.' } unless result
 
           record.audio.attach(io: file, filename: "#{record.title}.aac", content_type: "audio/aac")
           if record.save
@@ -58,9 +58,10 @@ module Api
       end
 
       def ffmpeg_params
+        pparams = params.require(:record).permit(:station_id, :from,
+                                                 :to)
         title = "#{params[:record][:station_id]}_#{params[:record][:from]}_#{params[:record][:to]}"
-        params.require(:record).permit(:station_id, :from,
-                                       :to).merge(title:)
+        pparams.merge(title:)
       end
 
       def authorization
