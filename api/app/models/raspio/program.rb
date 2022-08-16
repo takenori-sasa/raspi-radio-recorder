@@ -40,9 +40,14 @@ class Raspio::Program < ApplicationRecord
           description = descript(program)
           homepage = program.elements['url'].text
           prog = Raspio::Program.find_or_initialize_by(id:)
-          prog.update(raspio_station_id: station_id, title:, from:, to:, description:, homepage:, date:)
+          d = date
+          d -= 1 if late_time?(from)
+          prog.update(raspio_station_id: station_id, title:, from:, to:, description:, homepage:, date: d)
           prog.save
         end
+      rescue StandardError => e
+        logger.error(e)
+        raise ActiveRecord::Rollback
       end
     end
 
@@ -55,6 +60,11 @@ class Raspio::Program < ApplicationRecord
       stripped = ActionController::Base.helpers.strip_tags(concat).gsub(/&gt;|&lt/, "&gt;" => ">", "&lt;" => "<").gsub(/\t+|\n+/, "\n")
 
       hankaku(stripped)
+    end
+
+    def late_time?(time)
+      num = time.strftime('%H%M').to_i
+      [*0...459].include?(num)
     end
   end
 end

@@ -58,9 +58,10 @@ module Api
       end
 
       def ffmpeg_params
+        pparams = params.require(:record).permit(:station_id, :from,
+                                                 :to)
         title = "#{params[:record][:station_id]}_#{params[:record][:from]}_#{params[:record][:to]}"
-        params.require(:record).permit(:station_id, :from,
-                                       :to).merge(title:)
+        pparams.merge(title:)
       end
 
       def authorization
