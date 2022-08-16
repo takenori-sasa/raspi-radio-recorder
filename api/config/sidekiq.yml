@@ -11,3 +11,4 @@ production:
 :pidfile: ./tmp/pids/sidekiq.pid
 :logfile: ./log/sidekiq.log
 :concurrency: 10
+sidekiq_options retry: 5

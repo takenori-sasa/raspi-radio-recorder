@@ -18,14 +18,12 @@ class Raspio::Program < ApplicationRecord
     def add(dates)
       dates.each do |date|
         date = Date.parse(date) if date.is_a?(String)
-        add_time_table(date)
+        add_time_table(date.strftime('%Y%m%d'))
       end
     end
 
-    private
-
-    def add_time_table(date)
-      uri = URI.parse("https://radiko.jp/v3/program/date/#{date.strftime('%Y%m%d')}/#{AREA_ID}.xml")
+    def add_time_table(datestr)
+      uri = URI.parse("https://radiko.jp/v3/program/date/#{datestr}/#{AREA_ID}.xml")
       xml = Net::HTTP.get(uri)
       doc = REXML::Document.new(xml)
       REXML::XPath.match(doc, 'radiko/stations/station').map do |station|
@@ -46,10 +44,14 @@ class Raspio::Program < ApplicationRecord
           prog.save
         end
       rescue StandardError => e
-        logger.error(e)
+        e.full_messages.each do |message|
+          Rails.logger.error(message)
+        end
         raise ActiveRecord::Rollback
       end
     end
+
+    private
 
     def hankaku(text)
       NKF.nkf('-W -w -Z1', text).strip
