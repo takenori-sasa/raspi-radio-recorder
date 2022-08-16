@@ -6,7 +6,8 @@ class Raspio::RecordJob
     # ExceptionNotifier.call(msg, ex)
   end
 
-  def perform(*args)
-    Api::V1::RecordsController.create(*args)
+  def perform(_params)
+    # TODO: strong params 通す?
+    # Api::V1::RecordsController.create
   end
 end
