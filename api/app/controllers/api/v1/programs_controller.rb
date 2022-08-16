@@ -1,7 +1,3 @@
-require 'uri'
-require 'net/http'
-require 'base64'
-require 'tempfile'
 module Api
   module V1
     class ProgramsController < ApplicationController
@@ -46,7 +42,7 @@ module Api
       end
 
       def program_params
-        params.require(:program).permit(:title)
+        params.require(:program).permit(:title, :date)
       end
     end
   end
