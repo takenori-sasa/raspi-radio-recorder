@@ -6,12 +6,13 @@ module Api
       # before_action :make_time_table, only: [:show, :index]
 
       def index(date = [Time.zone.today])
-        create(date) unless Program.find_by(date:)
+        create(date) if Program.where(date:).count.zero?
         programs = Program.order(created_at: :desc)
         render json: { status: 'SUCCESS', message: 'Loaded programs', data: programs }
       end
 
-      def show(_date = [Time.zone.today])
+      def show(date = [Time.zone.today])
+        create(date) if Program.where(date:).count.zero?
         render json: { status: 'SUCCESS', message: 'Loaded the program', data: @program }
       end
 

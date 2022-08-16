@@ -17,6 +17,7 @@ class Raspio::Program < ApplicationRecord
     extend self
     def add(dates)
       dates.each do |date|
+        date = Date.parse(date) if date.is_a?(String)
         add_time_table(date)
       end
     end
