@@ -21,7 +21,7 @@ class Raspio::Program < ApplicationRecord
     end
 
     def add_daily(datestr)
-      # return if Rails.cache.exist?(cache_key(datestr))
+      # return if self.date_cache?(datestr)
 
       xml = cache_xml(datestr)
       doc = REXML::Document.new(xml)
@@ -40,13 +40,8 @@ class Raspio::Program < ApplicationRecord
       all_valid
     end
 
-    def cache_key(date)
-      key = if date.is_a?(String)
-              Date.parse(date).strftime('%Y%m%d')
-            else
-              date.strftime("%Y%m%d")
-            end
-      "cache_programs_#{key}"
+    def date_cache?(date)
+      Rails.cache.exist?(cache_key(date))
     end
 
     private
@@ -56,6 +51,15 @@ class Raspio::Program < ApplicationRecord
       Rails.cache.fetch(cache_key(datestr), expires_in: 1.day) do
         Net::HTTP.get(uri)
       end
+    end
+
+    def cache_key(date)
+      datestr = if date.is_a?(String)
+                  Date.parse(date).strftime('%Y%m%d')
+                else
+                  date.strftime("%Y%m%d")
+                end
+      "cache_programs_#{datestr}"
     end
   end
   # インスタンスメソッド(Raspio::Program.new.hogeたち)

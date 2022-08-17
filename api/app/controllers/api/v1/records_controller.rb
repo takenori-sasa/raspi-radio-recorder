@@ -6,7 +6,7 @@ module Api
       before_action :set_record, only: [:show, :update, :destroy]
 
       def index
-        records = Record.order(created_at: :desc)
+        records = Raspio::Record.order(updated_at: :desc)
         render json: { status: 'SUCCESS', message: 'Loaded records', data: records }
       end
 
@@ -56,7 +56,7 @@ module Api
                         .permit(:station_id, :from,
                                 :to)
         title = "#{params[:record][:station_id]}_#{params[:record][:from]}_#{params[:record][:to]}"
-        pparams.merge(title:)
+        pparams.merge(title:).stringify_keys
       end
     end
   end

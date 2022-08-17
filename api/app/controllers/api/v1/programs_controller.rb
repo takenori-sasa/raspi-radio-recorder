@@ -56,8 +56,8 @@ module Api
         # params
         # :date [string]
         dates = search_params[:date]
-        dates.each do |d|
-          Raspio::Program.add(d) unless Rails.cache.exist?(Raspio::Program.cache_key(d))
+        dates.each do |date|
+          Raspio::Program.add(date) unless Raspio::Program.date_cache?(date)
         rescue StandardError => e
           Rails.logger.error(e.full_message)
           render json: { status: 'ERROR', data: e.full_message }

@@ -1,7 +1,10 @@
 class Raspio::ProgramJob
   include Sidekiq::Job
   sidekiq_options retry: 5
-  sidekiq_retries_exhausted do |msg, ex|
+  sidekiq_options queue: 'low'
+  sidekiq_retries_exhausted do |msg, _ex|
+    Rails.logger.error(msg)
+    Rails.logger.error(exception)
     # ExceptionNotifier.call(msg, ex)
   end
 
