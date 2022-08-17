@@ -25,6 +25,7 @@ class Raspio::Program < ApplicationRecord
 
       xml = cache_xml(datestr)
       doc = REXML::Document.new(xml)
+      all_valid = true
       REXML::XPath.match(doc, 'radiko/stations/station').map do |station|
         station_id = station.attributes['id']
         REXML::XPath.match(station, 'progs/prog').map do |schedule|
@@ -33,9 +34,10 @@ class Raspio::Program < ApplicationRecord
           program = Raspio::Program.find_or_initialize_by(raspio_station_id: station_id, from:, to:)
           program.raspio_station_id = station_id
           program.set_from_schedule(schedule)
-          program.save
+          all_valid &= program.save
         end
       end
+      all_valid
     end
 
     private
