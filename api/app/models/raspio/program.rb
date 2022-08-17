@@ -31,7 +31,7 @@ class Raspio::Program < ApplicationRecord
         REXML::XPath.match(station, 'progs/prog').map do |schedule|
           to = Time.strptime(schedule.attributes['to'] + '+09:00', '%Y%m%d%H%M%S%Z')
           from = Time.strptime(schedule.attributes['ft'] + '+09:00', '%Y%m%d%H%M%S%Z')
-          program = Raspio::Program.find_or_initialize_by(raspio_station_id: station_id, from:, to:)
+          program = Raspio::Program.find_or_initialize_by(from:, raspio_station_id: station_id, to:)
           program.set_from_schedule(schedule)
           all_valid &= program.save
         end
@@ -67,9 +67,6 @@ class Raspio::Program < ApplicationRecord
   end
 
   def set_from_schedule(schedule)
-    ft = schedule.attributes['ft'] + '+09:00'
-    self.from = Time.strptime(ft, '%Y%m%d%H%M%S%Z')
-    self.to = Time.strptime(schedule.attributes['to'] + '+09:00', '%Y%m%d%H%M%S%Z')
     self.title = hankaku(schedule.elements['title'].text)
     self.description = descript(schedule)
     self.date = self.from.to_date
