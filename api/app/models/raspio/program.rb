@@ -32,7 +32,6 @@ class Raspio::Program < ApplicationRecord
           to = Time.strptime(schedule.attributes['to'] + '+09:00', '%Y%m%d%H%M%S%Z')
           from = Time.strptime(schedule.attributes['ft'] + '+09:00', '%Y%m%d%H%M%S%Z')
           program = Raspio::Program.find_or_initialize_by(raspio_station_id: station_id, from:, to:)
-          program.raspio_station_id = station_id
           program.set_from_schedule(schedule)
           all_valid &= program.save
         end
