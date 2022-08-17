@@ -40,6 +40,15 @@ class Raspio::Program < ApplicationRecord
       all_valid
     end
 
+    def cache_key(date)
+      key = if date.is_a?(String)
+              Date.parse(date).strftime('%Y%m%d')
+            else
+              date.strftime("%Y%m%d")
+            end
+      "cache_programs_#{key}"
+    end
+
     private
 
     def cache_xml(datestr)
@@ -47,10 +56,6 @@ class Raspio::Program < ApplicationRecord
       Rails.cache.fetch(cache_key(datestr), expires_in: 1.day) do
         Net::HTTP.get(uri)
       end
-    end
-
-    def cache_key(datestr)
-      "cache_programs_#{datestr}"
     end
   end
   # インスタンスメソッド(Raspio::Program.new.hogeたち)

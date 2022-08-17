@@ -6,7 +6,7 @@ module Api
       before_action :programs?, only: [:index]
 
       def index
-        programs = Program.where(search_params).order(from: :asc)
+        programs = Raspio::Program.where(search_params).order(from: :asc)
         render json: { status: 'SUCCESS', message: 'Loaded programs', data: programs }
       rescue StandardError => e
         Rails.logger.error(e.full_message)
@@ -18,7 +18,7 @@ module Api
       end
 
       def create(date)
-        Program.add(date)
+        Raspio::Program.add(date)
       rescue StandardError => e
         logger.error(e)
         render json: { status: 'ERROR', data: e }
@@ -41,7 +41,7 @@ module Api
       private
 
       def set_program
-        @program = Program.find(params[:id])
+        @program = Raspio::Program.find(params[:id])
       end
 
       def program_params
@@ -57,7 +57,7 @@ module Api
         # :date [string]
         dates = search_params[:date]
         dates.each do |d|
-          Program.add(d) if Program.where(date: d).count.zero?
+          Raspio::Program.add(d) unless Rails.cache.exist?(Raspio::Program.cache_key(d))
         rescue StandardError => e
           Rails.logger.error(e.full_message)
           render json: { status: 'ERROR', data: e.full_message }

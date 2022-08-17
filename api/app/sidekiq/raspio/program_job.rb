@@ -13,3 +13,10 @@ class Raspio::ProgramJob
     end
   end
 end
+# Test code
+# today = Time.zone.today
+# dates = (today - 3...today + 3).to_a
+# dates.map! do |date|
+#   date.strftime("%Y%m%d")
+# end
+# Raspio::ProgramJob.perform_async(dates)
