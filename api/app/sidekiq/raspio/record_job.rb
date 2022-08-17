@@ -8,7 +8,7 @@ class Raspio::RecordJob
 
   def perform(_params)
     # TODO: strong params 通す?
-    # Recordにcreate作ってcontrollerの移送する
+    # Tempfileをmodelに移してうまくいくかわからないので先送り
     # Api::V1::RecordsController.create
   end
 end
