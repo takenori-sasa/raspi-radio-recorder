@@ -36,8 +36,8 @@ class Raspio::Program < ApplicationRecord
     NKF.nkf('-W -w -Z1', text).strip
   end
 
-  def description(program)
-    concat = "#{program.elements['desc'].text}#{program.elements['info'].text}"
+  def description(schedule)
+    concat = "#{schedule.elements['desc'].text}#{schedule.elements['info'].text}"
     stripped = ActionController::Base.helpers.strip_tags(concat).gsub(/&gt;|&lt/, "&gt;" => ">", "&lt;" => "<").gsub(/\t+|\n+/, "\n")
 
     hankaku(stripped)

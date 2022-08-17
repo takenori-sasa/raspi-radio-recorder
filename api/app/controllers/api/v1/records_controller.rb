@@ -17,17 +17,14 @@ module Api
       def create
         record = Raspio::Record.new(ffmpeg_params)
         record.authorize
-        Tempfile.open([record.title, ".aac"]) do |file|
-          file.binmode
-          result = record.append(file)
-          render json: { status: 'ERROR', data: 'download failed.' } unless result
 
-          record.audio.attach(io: file, filename: "#{record.title}.aac", content_type: "audio/aac")
-          if record.save
-            render json: { status: 'SUCCESS', data: record }
-          else
-            render json: { status: 'ERROR', data: record.errors }
-          end
+        Tempfile.open([record.title, ".aac"]) do |tmpfile|
+          record.attach(tmpfile)
+          render json: { status: 'SUCCESS', data: record } if record.save
+        rescue StandardError => e
+          Rails.logger.error(e.full_message)
+          render json: { status: 'ERROR', data: record.errors || e.full_message }
+          raise ActiveRecord::Rollback
         end
       end
 

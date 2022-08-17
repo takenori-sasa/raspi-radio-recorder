@@ -28,6 +28,13 @@ module Raspio
 
       self.auth_token = res1['X-Radiko-AuthToken']
     end
+
+    def attach(tmpfile)
+      title = self.title
+      tmpfile.binmode
+      self.append(tmpfile)
+      self.audio.attach(io: tmpfile, filename: "#{title}.aac", content_type: "audio/aac")
+    end
     concerning :Authorizer do
       extend ActiveSupport::Concern
       extend self
