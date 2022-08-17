@@ -19,8 +19,8 @@ module Api
         render json: { status: 'SUCCESS', message: 'Loaded the program', data: @program }
       end
 
-      def create(date)
-        Program::TimeTable.add(date)
+      def create(dates)
+        Program.add(dates)
       rescue StandardError => e
         logger.error(e)
         render json: { status: 'ERROR', data: e }

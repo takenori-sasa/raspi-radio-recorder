@@ -5,9 +5,7 @@ class Raspio::ProgramJob
     # ExceptionNotifier.call(msg, ex)
   end
 
-  def perform(date)
-    Raspio::Program::TimeTable.add_time_table(date)
-  rescue StandardError => e
-    # Do something
+  def perform(dates)
+    Raspio::Program.add_datestr(dates)
   end
 end

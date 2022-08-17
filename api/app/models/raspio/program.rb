@@ -8,65 +8,72 @@ class Raspio::Program < ApplicationRecord
   validates :from, presence: true, comparison: { less_than: :to }
   validates :homepage, format: /\A#{URI::DEFAULT_PARSER.make_regexp(['http', 'https'])}\z/, allow_blank: true
   validates :to, presence: true, comparison: { greater_than: :from }
-  AREA_ID = 'JP26'.freeze
+  @@area_id = 'JP26'
   def station
     self.raspio_station
   end
-  concerning :TimeTable do
-    extend ActiveSupport::Concern
-    extend self
-    def add(dates)
-      dates.each do |date|
-        date = Date.parse(date) if date.is_a?(String)
-        add_time_table(date.strftime('%Y%m%d'))
+
+  def self.add(dates)
+    dates.map! do |d|
+      if d.is_a?(String)
+        Date.parse(d).strftime('%Y%m%d')
+      else
+        d.strftime('%Y%m%d')
       end
     end
+    dates.each do |d|
+      add_programs(d)
+    end
+  end
 
-    def add_time_table(datestr)
-      uri = URI.parse("https://radiko.jp/v3/program/date/#{datestr}/#{AREA_ID}.xml")
-      xml = Net::HTTP.get(uri)
-      doc = REXML::Document.new(xml)
-      REXML::XPath.match(doc, 'radiko/stations/station').map do |station|
-        station_id = station.attributes['id']
-        date = Date.strptime(station.elements['progs/date'].text, '%Y%m%d')
-        REXML::XPath.match(station, 'progs/prog').map do |program|
-          id = program.attributes['id']
-          ft = program.attributes['ft'] + '+09:00'
-          from = Time.strptime(ft, '%Y%m%d%H%M%S%Z')
-          to = Time.strptime(program.attributes['to'] + '+09:00', '%Y%m%d%H%M%S%Z')
-          title = hankaku(program.elements['title'].text)
-          description = descript(program)
-          homepage = program.elements['url'].text
-          prog = Raspio::Program.find_or_initialize_by(id:)
-          d = date
-          d -= 1 if late_time?(from)
-          prog.update(raspio_station_id: station_id, title:, from:, to:, description:, homepage:, date: d)
-          prog.save
-        end
-      rescue StandardError => e
-        e.full_messages.each do |message|
-          Rails.logger.error(message)
-        end
-        raise ActiveRecord::Rollback
+  def self.add_datestr(dates_str)
+    dates_str.each do |d_str|
+      add_programs(d_str)
+    end
+  end
+
+  def hankaku(text)
+    NKF.nkf('-W -w -Z1', text).strip
+  end
+
+  def description(program)
+    concat = "#{program.elements['desc'].text}#{program.elements['info'].text}"
+    stripped = ActionController::Base.helpers.strip_tags(concat).gsub(/&gt;|&lt/, "&gt;" => ">", "&lt;" => "<").gsub(/\t+|\n+/, "\n")
+
+    hankaku(stripped)
+  end
+
+  def late_time?(time)
+    num = time.strftime('%H%M').to_i
+    [*0...459].include?(num)
+  end
+
+  def self.add_programs(datestr)
+    uri = URI.parse("https://radiko.jp/v3/program/date/#{datestr}/#{@@area_id}.xml")
+    xml = Net::HTTP.get(uri)
+    doc = REXML::Document.new(xml)
+    REXML::XPath.match(doc, 'radiko/stations/station').map do |station|
+      station_id = station.attributes['id']
+      date = Date.strptime(station.elements['progs/date'].text, '%Y%m%d')
+      REXML::XPath.match(station, 'progs/prog').map do |schedule|
+        id = schedule.attributes['id']
+        program = Raspio::Program.find_or_initialize_by(id:)
+        ft = schedule.attributes['ft'] + '+09:00'
+        from = Time.strptime(ft, '%Y%m%d%H%M%S%Z')
+        to = Time.strptime(schedule.attributes['to'] + '+09:00', '%Y%m%d%H%M%S%Z')
+        title = program.hankaku(schedule.elements['title'].text)
+        description = program.description(schedule)
+        homepage = schedule.elements['url'].text
+        d = date
+        d -= 1 if program.late_time?(from)
+        program.update(raspio_station_id: station_id, title:, from:, to:, description:, homepage:, date: d)
+        program.save
       end
-    end
-
-    private
-
-    def hankaku(text)
-      NKF.nkf('-W -w -Z1', text).strip
-    end
-
-    def descript(program)
-      concat = "#{program.elements['desc'].text}#{program.elements['info'].text}"
-      stripped = ActionController::Base.helpers.strip_tags(concat).gsub(/&gt;|&lt/, "&gt;" => ">", "&lt;" => "<").gsub(/\t+|\n+/, "\n")
-
-      hankaku(stripped)
-    end
-
-    def late_time?(time)
-      num = time.strftime('%H%M').to_i
-      [*0...459].include?(num)
+    rescue StandardError => e
+      # e.full_message do |message|
+      Rails.logger.error(e.full_message)
+      # end
+      raise ActiveRecord::Rollback
     end
   end
 end
