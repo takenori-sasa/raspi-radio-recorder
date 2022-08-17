@@ -1,7 +1,7 @@
 class CreateRaspioPrograms < ActiveRecord::Migration[7.0]
   def change
     create_table :raspio_programs do |t|
-      t.references :raspio_station, type: :string, null: false, foreign_key: true
+      t.belongs_to :raspio_station, type: :string, null: false, foreign_key: true
       t.string :title, null: false
       t.text :description
       t.string :homepage
