@@ -6,9 +6,9 @@ class Raspio::RecordJob
     # ExceptionNotifier.call(msg, ex)
   end
 
-  def perform(_params)
+  def perform(params)
     # TODO: strong params 通す?
     # Tempfileをmodelに移してうまくいくかわからないので先送り
-    # Api::V1::RecordsController.create
+    Api::V1::RecordsController.create(params)
   end
 end

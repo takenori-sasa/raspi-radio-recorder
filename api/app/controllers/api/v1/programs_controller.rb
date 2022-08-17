@@ -3,24 +3,22 @@ module Api
     class ProgramsController < ApplicationController
       include Raspio
       before_action :set_program, only: [:show, :update, :destroy]
-      # before_action :make_time_table, only: [:show, :index]
+      before_action :programs?, only: [:index]
 
       def index
-        date = search_params[:date]
-        date.map! { |d| Date.parse(d) if d.is_a?(String) }
-        # TODO: titleとかで検索したい
-        create(date) if Program.where(date:).count.zero?
         programs = Program.where(search_params).order(from: :asc)
         render json: { status: 'SUCCESS', message: 'Loaded programs', data: programs }
+      rescue StandardError => e
+        Rails.logger.error(e.full_message)
+        render json: { status: 'ERROR', data: e.full_message }
       end
 
-      def show(date = [Time.zone.today])
-        create(date) if Program.where(date:).count.zero?
+      def show
         render json: { status: 'SUCCESS', message: 'Loaded the program', data: @program }
       end
 
-      def create(dates)
-        Program.add(dates)
+      def create(date)
+        Program.add(date)
       rescue StandardError => e
         logger.error(e)
         render json: { status: 'ERROR', data: e }
@@ -52,6 +50,19 @@ module Api
 
       def search_params
         params.require(:program).permit(date: [])
+      end
+
+      def programs?
+        # params
+        # :date [string]
+        dates = search_params[:date]
+        dates.each do |d|
+          Program.add(d) if Program.where(date: d).count.zero?
+        rescue StandardError => e
+          Rails.logger.error(e.full_message)
+          render json: { status: 'ERROR', data: e.full_message }
+          raise ActiveRecord::Rollback
+        end
       end
     end
   end
