@@ -1,7 +1,7 @@
 require 'rexml/document'
 require 'net/http'
 require 'nkf'
-uri = URI.parse('https://radiko.jp/v3/station/list/JP26.xml')
+uri = URI.parse("https://radiko.jp/v3/station/list/JP26.xml")
 xml = Net::HTTP.get(uri)
 doc = REXML::Document.new(xml)
 REXML::XPath.match(doc, '/stations/station').map do |station|

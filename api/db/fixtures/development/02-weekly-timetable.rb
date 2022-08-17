@@ -1,4 +1,6 @@
 today = Time.zone.today
-bow = today.beginning_of_week
-eow = today.end_of_week
-Raspio::Program::TimeTable.add(bow...eow)
+bow = today - 7
+eow = today + 7
+(bow...eow).to_a.each do |date|
+  Raspio::Program.add(date)
+end
