@@ -4,36 +4,59 @@ require 'base64'
 module Raspio
   class Record < ApplicationRecord
     validates :title, presence: true
-    attr_accessor :from, :to, :station_id, :auth_token
-
-    # validate :params
+    attr_accessor :from, :to, :station_id
 
     has_one_attached :audio
     # @see https://radiko.jp/apps/js/playerCommon.js
     # @see https://blog.bluedeer.net/archives/224
     AUTHKEY = 'bcd151073c03b352e1ef2fd66c32209da9ca0afa'.freeze
-    def append(file)
+
+    # validate :params
+    # インスタンスメソッド
+    def initialize(params)
+      super # superでrecord.from,record.to,record.station_idには代入済んでるけど明示して代入しておく
       station_id = self.station_id
       from = self.from
       to = self.to
-      system("ffmpeg -headers \"X-Radiko-AuthToken:#{self.auth_token}\" -i \"https://radiko.jp/v2/api/ts/playlist.m3u8?station_id=#{station_id}&l=15&ft=#{from}00&to=#{to}00\" -loglevel \"error\" -vn -y -acodec copy #{file.path}")
+      self.title = "#{station_id}_#{from}_#{to}"
+    end
+
+    def attach_audio(file)
+      authorize
+      curl_audio(file)
+      self.audio.attach(io: file, filename: "#{title}.aac", content_type: "audio/aac")
+    end
+
+    private
+
+    def curl_audio(file)
+      system("ffmpeg -headers \"X-Radiko-AuthToken:#{@auth_token}\" -i \"https://radiko.jp/v2/api/ts/playlist.m3u8?station_id=#{station_id}&l=15&ft=#{from}00&to=#{to}00\" -loglevel \"error\" -vn -y -acodec copy #{file.path}")
     end
 
     def authorize
+      # TODO: 例外処理追加
       res1 = Authorizer.authorization1
-      render json: { status: 'ERROR', data: 'authorization1 failed.' } and return unless res1.is_a?(Net::HTTPSuccess)
+      return unless res1.is_a?(Net::HTTPSuccess)
 
       res2 = Authorizer.authorization2(res1)
-      render json: { status: 'ERROR', data: 'authorization2 failed.' } and return unless res2.is_a?(Net::HTTPSuccess)
+      return unless res2.is_a?(Net::HTTPSuccess)
 
-      self.auth_token = res1['X-Radiko-AuthToken']
+      @auth_token = res1['X-Radiko-AuthToken']
     end
 
-    def attach(tmpfile)
-      title = self.title
-      tmpfile.binmode
-      self.append(tmpfile)
-      self.audio.attach(io: tmpfile, filename: "#{title}.aac", content_type: "audio/aac")
+    def curl_audio(file)
+      system("ffmpeg -headers \"X-Radiko-AuthToken:#{@auth_token}\" -i \"https://radiko.jp/v2/api/ts/playlist.m3u8?station_id=#{station_id}&l=15&ft=#{from}00&to=#{to}00\" -loglevel \"error\" -vn -y -acodec copy #{file.path}")
+    end
+
+    def authorize
+      # TODO: 例外処理追加
+      res1 = Authorizer.authorization1
+      return unless res1.is_a?(Net::HTTPSuccess)
+
+      res2 = Authorizer.authorization2(res1)
+      return unless res2.is_a?(Net::HTTPSuccess)
+
+      @auth_token = res1['X-Radiko-AuthToken']
     end
     concerning :Authorizer do
       extend ActiveSupport::Concern
@@ -52,7 +75,7 @@ module Raspio
       end
 
       def authorization2(res)
-        auth_token = res['X-Radiko-AuthToken']
+        auth_token = res["X-Radiko-AuthToken"]
         key_length = res['X-Radiko-KeyLength'].to_i
         key_offset = res['X-Radiko-KeyOffset'].to_i
         autho2_headers = { 'X-Radiko-AuthToken': auth_token,

@@ -16,16 +16,14 @@ module Api
 
       def create
         record = Raspio::Record.new(ffmpeg_params)
-        record.authorize
-
-        Tempfile.open([record.title, ".aac"]) do |tmpfile|
-          record.attach(tmpfile)
+        Tempfile.open([record.title]) do |tempfile|
+          tempfile.binmode
+          record.attach_audio(tempfile)
           render json: { status: 'SUCCESS', data: record } if record.save
-        rescue StandardError => e
-          Rails.logger.error(e.full_message)
-          render json: { status: 'ERROR', data: record.errors || e.full_message }
-          raise ActiveRecord::Rollback
         end
+      rescue StandardError => e
+        Rails.logger.error(e.full_message)
+        render json: { status: 'ERROR', data: e.full_message }
       end
 
       def destroy
@@ -55,8 +53,9 @@ module Api
         pparams = params.require(:record)
                         .permit(:station_id, :from,
                                 :to)
-        title = "#{params[:record][:station_id]}_#{params[:record][:from]}_#{params[:record][:to]}"
-        pparams.merge(title:).stringify_keys
+        # title = "#{params[:record][:station_id]}_#{params[:record][:from]}_#{params[:record][:to]}"
+        # pparams.merge(title:).stringify_keys
+        pparams.stringify_keys
       end
     end
   end

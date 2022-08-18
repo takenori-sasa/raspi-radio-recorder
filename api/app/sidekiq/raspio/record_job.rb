@@ -16,9 +16,8 @@ class Raspio::RecordJob
     # station_id String MBS
     # title String
     record = Raspio::Record.new(params)
-    record.authorize
-    Tempfile.open([record.title, ".aac"]) do |tmpfile|
-      record.attach(tmpfile)
+    Tempfile.open([record.title, '.acc']) do |file|
+      record.attach_audio(file)
       record.save
     end
   end
