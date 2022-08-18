@@ -16,16 +16,17 @@ class Raspio::RecordJob
     # station_id String MBS
     # title String
     record = Raspio::Record.new(params)
-    Tempfile.open([record.title, '.acc']) do |file|
+    Tempfile.open([record.title, '.aac']) do |file|
+      file.binmode
       record.attach_audio(file)
       record.save
     end
   end
 end
-# param = {
+# p = {
 #   station_id: 'MBS',
 #   from: '202208140330',
 #   to: '202208140345',
 #   title: 'MBS_202208140330'
 # }
-# Raspio::RecordJob.perform_async(param.stringify_keys)
+# Raspio::RecordJob.perform_async(p.stringify_keys)

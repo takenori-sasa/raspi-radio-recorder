@@ -4,6 +4,7 @@ require 'base64'
 module Raspio
   class Record < ApplicationRecord
     validates :title, presence: true
+    validate :audio_size
     attr_accessor :from, :to, :station_id
 
     has_one_attached :audio
@@ -30,7 +31,7 @@ module Raspio
     private
 
     def curl_audio(file)
-      system("ffmpeg -headers \"X-Radiko-AuthToken:#{@auth_token}\" -i \"https://radiko.jp/v2/api/ts/playlist.m3u8?station_id=#{station_id}&l=15&ft=#{from}00&to=#{to}00\" -loglevel \"error\" -vn -y -acodec copy #{file.path}")
+      system("ffmpeg -headers \"X-Radiko-AuthToken:#{@auth_token}\" -i \"https://radiko.jp/v2/api/ts/playlist.m3u8?station_id=#{station_id}&l=15&ft=#{from}00&to=#{to}00\" -loglevel \"error\" -y -acodec copy #{file.path}")
     end
 
     def authorize
@@ -44,19 +45,11 @@ module Raspio
       @auth_token = res1['X-Radiko-AuthToken']
     end
 
-    def curl_audio(file)
-      system("ffmpeg -headers \"X-Radiko-AuthToken:#{@auth_token}\" -i \"https://radiko.jp/v2/api/ts/playlist.m3u8?station_id=#{station_id}&l=15&ft=#{from}00&to=#{to}00\" -loglevel \"error\" -vn -y -acodec copy #{file.path}")
-    end
-
-    def authorize
-      # TODO: 例外処理追加
-      res1 = Authorizer.authorization1
-      return unless res1.is_a?(Net::HTTPSuccess)
-
-      res2 = Authorizer.authorization2(res1)
-      return unless res2.is_a?(Net::HTTPSuccess)
-
-      @auth_token = res1['X-Radiko-AuthToken']
+    def audio_size
+      if audio.blob.byte_size == 0.bytes
+        audio.purge
+        errors.add(:audio, :has_no_record)
+      end
     end
     concerning :Authorizer do
       extend ActiveSupport::Concern
