@@ -6,9 +6,6 @@ module Raspio
     attr_accessor :from, :to, :station_id
 
     has_one_attached :audio
-    # @see https://radiko.jp/apps/js/playerCommon.js
-    # @see https://blog.bluedeer.net/archives/224
-    AUTH_KEY = 'bcd151073c03b352e1ef2fd66c32209da9ca0afa'.freeze
 
     # validate :params
     # インスタンスメソッド
@@ -29,6 +26,7 @@ module Raspio
     private
 
     def curl_audio(file)
+      # TODO: 400 Bad Req エラー追加
       system("ffmpeg -headers \"X-Radiko-AuthToken:#{@auth_token}\" -i \"https://radiko.jp/v2/api/ts/playlist.m3u8?station_id=#{station_id}&l=15&ft=#{from}00&to=#{to}00\" -loglevel \"error\" -y -acodec copy #{file.path}")
     end
 
@@ -49,14 +47,14 @@ module Raspio
       audio.purge
       errors.add(:audio, :has_no_record)
     end
-    concerning :Authorizer do
+
+    module Authorizer
       extend ActiveSupport::Concern
+      # @see https://blog.bluedeer.net/archives/224
+      # https://radiko.jp/apps/js/playerCommon.js内に書かれてる
+      AUTH_KEY = 'bcd151073c03b352e1ef2fd66c32209da9ca0afa'.freeze
 
       class << self
-        def connection
-          Faraday.new('https://radiko.jp')
-        end
-
         def authorization1
           connection.get do |request|
             request.url '/v2/api/auth1'
@@ -78,6 +76,12 @@ module Raspio
             request.headers["X-Radiko-User"] = "dummy_user"
             request.headers["X-Radiko-Device"] = "pc"
           end
+        end
+
+        private
+
+        def connection
+          Faraday.new('https://radiko.jp')
         end
 
         def partial_key(key, length, offset)
