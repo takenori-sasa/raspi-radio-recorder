@@ -25,17 +25,23 @@ services:
       - 6379:6379
     volumes_from:
       - shared
-    command: redis-server --appendonly yes
-    environment:
-      REDIS_URL: redis://redis:6379
+    command: >
+      bash -c "mkdir -p /var/log/redis &&
+      touch /var/log/redis/redis.log &&
+      redis-server --logfile /var/log/redis/redis.log"
+    env_file: .env.dev
+    volumes:
+      - ./api/log:/var/log/redis
 
   api: &api_base
     build:
       context: ./api
       dockerfile: Dockerfile
-    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3001 -b '0.0.0.0'"
-    # env_file:
-    #   - ../.env.dev
+    command: >
+      bash -c "rm -f tmp/pids/server.pid &&
+      bundle exec rails s -p 3001 -b '0.0.0.0'"
+    env_file:
+      - .env.dev
     volumes:
       - ./api:/app:cached
     volumes_from:
@@ -47,8 +53,6 @@ services:
       - redis
     tty: true
     stdin_open: true
-    environment:
-      REDIS_URL: redis://redis:6379
     restart: always
   sidekiq:
     <<: *api_base
@@ -56,8 +60,6 @@ services:
     depends_on:
       - db
       - redis
-    environment:
-      REDIS_URL: redis://redis:6379
     ports: []
     volumes_from:
       - shared

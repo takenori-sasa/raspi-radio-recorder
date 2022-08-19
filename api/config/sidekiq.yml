@@ -10,5 +10,5 @@ production:
 :verbose: false
 :pidfile: ./tmp/pids/sidekiq.pid
 :logfile: ./log/sidekiq.log
-:concurrency: 10
+:concurrency:   pool: <%= ENV.fetch("SIDEKIQ_CONCURRENCY") { 10 } %>
 sidekiq_options retry: 5
