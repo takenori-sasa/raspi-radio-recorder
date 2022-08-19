@@ -1,7 +1,6 @@
 module Api
   module V1
     class ProgramsController < ApplicationController
-      include Raspio
       before_action :set_program, only: [:show, :update, :destroy]
       before_action :programs?, only: [:index]
 
@@ -59,9 +58,9 @@ module Api
         dates.each do |date|
           Raspio::Program.add(date) unless Raspio::Program.date_cache?(date)
         rescue StandardError => e
+          Raspio::Program.delete_cache(date)
           Rails.logger.error(e.full_message)
-          render json: { status: 'ERROR', data: e.full_message }
-          raise ActiveRecord::Rollback
+          # render json: { status: 'ERROR', message: 'Time-Table Not Found', data: { date:, error_message: e.message } }
         end
       end
     end
