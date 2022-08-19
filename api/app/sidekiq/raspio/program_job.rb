@@ -8,18 +8,16 @@ class Raspio::ProgramJob
     # ExceptionNotifier.call(msg, ex)
   end
 
-  def perform(dates_str)
+  def perform(date_str)
     # params
     # dates_str [string]
-    dates_str.each do |date_str|
-      Raspio::Program.add(date_str)
-    end
+    Raspio::Program.add(date_str)
   end
 end
 # Test code
 # today = Time.zone.today
 # dates = (today - 3...today + 3).to_a
-# dates.map! do |date|
-#   date.strftime("%Y%m%d")
+# dates.each do |date|
+#   date_str = date.strftime("%Y%m%d")
+#   Raspio::ProgramJob.perform_async(date_str)
 # end
-# Raspio::ProgramJob.perform_async(dates)
