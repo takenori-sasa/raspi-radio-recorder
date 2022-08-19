@@ -38,9 +38,11 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
-    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3001 -b '0.0.0.0'"
+    command: >
+      bash -c "rm -f tmp/pids/server.pid &&
+      bundle exec rails s -p 3001 -b '0.0.0.0'"
     env_file:
-      - ./.env
+      - .env.dev
     volumes:
       - ./api:/app:cached
     volumes_from:
