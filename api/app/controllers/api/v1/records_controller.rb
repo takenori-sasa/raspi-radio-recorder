@@ -20,10 +20,10 @@ module Api
           tempfile.binmode
           record.attach_audio(tempfile)
           render json: { status: 'SUCCESS', data: record } if record.save
+        rescue StandardError => e
+          Rails.logger.error(e.full_message)
+          render json: { status: 'ERROR', data: e.full_message }
         end
-      rescue StandardError => e
-        Rails.logger.error(e.full_message)
-        render json: { status: 'ERROR', data: e.full_message }
       end
 
       def destroy
@@ -50,12 +50,7 @@ module Api
       end
 
       def ffmpeg_params
-        pparams = params.require(:record)
-                        .permit(:station_id, :from,
-                                :to)
-        # title = "#{params[:record][:station_id]}_#{params[:record][:from]}_#{params[:record][:to]}"
-        # pparams.merge(title:).stringify_keys
-        pparams.stringify_keys
+        params.require(:record).permit(:station_id, :from, :to)
       end
     end
   end
