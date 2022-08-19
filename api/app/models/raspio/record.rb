@@ -2,7 +2,7 @@ require 'faraday'
 module Raspio
   class Record < ApplicationRecord
     validates :title, presence: true
-    validate :audio_size
+    validate :audio_size, :audio?
     attr_accessor :from, :to, :station_id
 
     has_one_attached :audio
@@ -46,6 +46,10 @@ module Raspio
 
       audio.purge
       errors.add(:audio, :has_no_record)
+    end
+
+    def audio?
+      audio.attached?
     end
 
     module Authorizer
