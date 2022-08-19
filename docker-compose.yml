@@ -25,7 +25,12 @@ services:
       - 6379:6379
     volumes_from:
       - shared
-    command: redis-server --appendonly yes
+    command: >
+      bash -c "mkdir -p /var/log/redis &&
+      touch /var/log/redis/redis.log &&
+      redis-server --logfile /var/log/redis/redis.log"
+    volumes:
+      - ./api/log:/var/log/redis
     env_file:
       - ./.env
 
