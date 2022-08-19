@@ -1,16 +1,11 @@
-require 'uri'
-require 'net/http'
-require 'base64'
+require 'faraday'
 module Raspio
   class Record < ApplicationRecord
     validates :title, presence: true
-    validate :audio_size
+    validate :audio_size, :audio?
     attr_accessor :from, :to, :station_id
 
     has_one_attached :audio
-    # @see https://radiko.jp/apps/js/playerCommon.js
-    # @see https://blog.bluedeer.net/archives/224
-    AUTHKEY = 'bcd151073c03b352e1ef2fd66c32209da9ca0afa'.freeze
 
     # validate :params
     # インスタンスメソッド
@@ -31,58 +26,71 @@ module Raspio
     private
 
     def curl_audio(file)
+      # TODO: 400 Bad Req エラー追加
       system("ffmpeg -headers \"X-Radiko-AuthToken:#{@auth_token}\" -i \"https://radiko.jp/v2/api/ts/playlist.m3u8?station_id=#{station_id}&l=15&ft=#{from}00&to=#{to}00\" -loglevel \"error\" -y -acodec copy #{file.path}")
     end
 
     def authorize
       # TODO: 例外処理追加
       res1 = Authorizer.authorization1
-      return unless res1.is_a?(Net::HTTPSuccess)
+      return unless res1.success?
 
-      res2 = Authorizer.authorization2(res1)
-      return unless res2.is_a?(Net::HTTPSuccess)
+      res2 = Authorizer.authorization2(res1.headers)
+      return unless res2.success?
 
-      @auth_token = res1['X-Radiko-AuthToken']
+      @auth_token = res1.headers['X-Radiko-AuthToken']
     end
 
     def audio_size
-      if audio.blob.byte_size == 0.bytes
-        audio.purge
-        errors.add(:audio, :has_no_record)
-      end
+      return unless audio.blob.byte_size == 0.bytes
+
+      audio.purge
+      errors.add(:audio, :has_no_record)
     end
-    concerning :Authorizer do
+
+    def audio?
+      audio.attached?
+    end
+
+    module Authorizer
       extend ActiveSupport::Concern
-      extend self
+      # @see https://blog.bluedeer.net/archives/224
+      # https://radiko.jp/apps/js/playerCommon.js内に書かれてる
+      AUTH_KEY = 'bcd151073c03b352e1ef2fd66c32209da9ca0afa'.freeze
 
-      def authorization1
-        uri = URI.parse('https://radiko.jp/v2/api/auth1')
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = uri.scheme == "https"
+      class << self
+        def authorization1
+          connection.get do |request|
+            request.url '/v2/api/auth1'
+            request.headers["X-Radiko-App"] = "pc_html5"
+            request.headers["X-Radiko-App-Version"] = "0.0.1"
+            request.headers["X-Radiko-User"] = "dummy_user"
+            request.headers["X-Radiko-Device"] = "pc"
+          end
+        end
 
-        autho1_headers = { 'X-Radiko-App': 'pc_html5',
-                           'X-Radiko-App-Version': '0.0.1',
-                           'X-Radiko-User': 'dummy_user',
-                           'X-Radiko-Device': 'pc' }
-        http.get(uri.path, autho1_headers)
-      end
+        def authorization2(header1)
+          auth_token = header1["X-Radiko-AuthToken"]
+          key_length = header1['X-Radiko-KeyLength'].to_i
+          key_offset = header1['X-Radiko-KeyOffset'].to_i
+          connection.get do |request|
+            request.url '/v2/api/auth2'
+            request.headers['X-Radiko-AuthToken'] = auth_token
+            request.headers['X-Radiko-PartialKey'] = partial_key(AUTH_KEY, key_length, key_offset)
+            request.headers["X-Radiko-User"] = "dummy_user"
+            request.headers["X-Radiko-Device"] = "pc"
+          end
+        end
 
-      def authorization2(res)
-        auth_token = res["X-Radiko-AuthToken"]
-        key_length = res['X-Radiko-KeyLength'].to_i
-        key_offset = res['X-Radiko-KeyOffset'].to_i
-        autho2_headers = { 'X-Radiko-AuthToken': auth_token,
-                           'X-Radiko-PartialKey': partial_key(Record::AUTHKEY, key_length, key_offset),
-                           'X-Radiko-User': 'dummy_user',
-                           'X-Radiko-Device': 'pc' }
-        uri = URI.parse('https://radiko.jp/v2/api/auth2')
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = uri.scheme == "https"
-        http.get(uri.path, autho2_headers)
-      end
+        private
 
-      def partial_key(key, length, offset)
-        Base64.encode64(key.slice(offset, length))
+        def connection
+          Faraday.new('https://radiko.jp')
+        end
+
+        def partial_key(key, length, offset)
+          Base64.encode64(key.slice(offset, length))
+        end
       end
     end
   end

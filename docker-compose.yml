@@ -29,9 +29,10 @@ services:
       bash -c "mkdir -p /var/log/redis &&
       touch /var/log/redis/redis.log &&
       redis-server --logfile /var/log/redis/redis.log"
-    env_file: .env.dev
     volumes:
       - ./api/log:/var/log/redis
+    env_file:
+      - ./.env
 
   api: &api_base
     build:

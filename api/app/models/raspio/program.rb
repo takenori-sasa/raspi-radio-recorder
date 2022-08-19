@@ -43,6 +43,10 @@ class Raspio::Program < ApplicationRecord
       Rails.cache.exist?(cache_key(date))
     end
 
+    def delete_cache(date)
+      Rails.cache.delete(cache_key(date))
+    end
+
     private
 
     def cache_xml(datestr)
