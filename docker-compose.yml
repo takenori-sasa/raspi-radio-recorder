@@ -32,7 +32,7 @@ services:
     volumes:
       - ./api/log:/var/log/redis
     env_file:
-      - ./.env
+      - ./.env.dev
 
   api: &api_base
     build:
