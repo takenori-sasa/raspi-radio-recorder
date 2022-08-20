@@ -20,6 +20,16 @@ class Raspio::Program < ApplicationRecord
       add_daily(datestr)
     end
 
+    def date_cache?(date)
+      Rails.cache.exist?(cache_key(date))
+    end
+
+    def delete_cache(date)
+      Rails.cache.delete(cache_key(date))
+    end
+
+    private
+
     def add_daily(datestr)
       # return if self.date_cache?(datestr)
 
@@ -38,16 +48,6 @@ class Raspio::Program < ApplicationRecord
       end
       all_valid
     end
-
-    def date_cache?(date)
-      Rails.cache.exist?(cache_key(date))
-    end
-
-    def delete_cache(date)
-      Rails.cache.delete(cache_key(date))
-    end
-
-    private
 
     def cache_xml(datestr)
       uri = URI.parse("https://radiko.jp/v3/program/date/#{datestr}/#{@@area_id}.xml")
