@@ -3,7 +3,9 @@ module Raspio
   class Record < ApplicationRecord
     validates :title, presence: true
     validate :audio_size, :audio?
-    attr_accessor :from, :to, :station_id
+    attribute :from, :string
+    attribute :to, :string
+    attribute :station_id, :string
 
     has_one_attached :audio
 
@@ -11,10 +13,8 @@ module Raspio
     # インスタンスメソッド
     def initialize(params)
       super # superでrecord.from,record.to,record.station_idには代入済んでるけど明示して代入しておく
-      station_id = self.station_id
-      from = self.from
-      to = self.to
-      self.title = "#{station_id}_#{from}_#{to}"
+      binding.pry
+      self.title = "#{self.station_id}_#{format_time(self.from)}_#{format_time(self.to)}"
     end
 
     def attach_audio(file)
@@ -27,7 +27,7 @@ module Raspio
 
     def curl_audio(file)
       # TODO: 400 Bad Req エラー追加
-      system("ffmpeg -headers \"X-Radiko-AuthToken:#{@auth_token}\" -i \"https://radiko.jp/v2/api/ts/playlist.m3u8?station_id=#{station_id}&l=15&ft=#{from}00&to=#{to}00\" -loglevel \"error\" -y -acodec copy #{file.path}")
+      system("ffmpeg -headers \"X-Radiko-AuthToken:#{@auth_token}\" -i \"https://radiko.jp/v2/api/ts/playlist.m3u8?station_id=#{station_id}&l=15&ft=#{format_time(from)}&to=#{format_time(to)}\" -loglevel \"error\" -y -acodec copy #{file.path}")
     end
 
     def authorize
@@ -52,12 +52,16 @@ module Raspio
       audio.attached?
     end
 
+    def format_time(time)
+      Time.parse(time).strftime('%Y%m%d%H%M') + '00'
+    end
+
     module Authorizer
       extend ActiveSupport::Concern
       # @see https://blog.bluedeer.net/archives/224
       # https://radiko.jp/apps/js/playerCommon.js内に書かれてる
       AUTH_KEY = 'bcd151073c03b352e1ef2fd66c32209da9ca0afa'.freeze
-
+      private_constant :AUTH_KEY
       class << self
         def authorization1
           connection.get do |request|
